@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: afyasignal-backend
+    runtime: java
+    rootDir: AfyaSignalBackend/AfyaSignal
+    buildCommand: ./mvnw clean package -DskipTests
+    startCommand: java -jar target/AfyaSignal-0.0.1-SNAPSHOT.jar
+    plan: free
+    envVars:
+      - key: DB_HOST
+        value: dpg-d7rjs6e7r5hc739e1ka0-a.oregon-postgres.render.com
+      - key: DB_PORT
+        value: 5432
+      - key: DB_NAME
+        value: afyasignal
+      - key: DB_USERNAME
+        value: afyasignal_user
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRATION
+        value: 86400000
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        value: http://localhost:3000
+      - key: DEMO_DATA_ENABLED
+        value: false
