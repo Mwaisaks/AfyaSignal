@@ -1,0 +1,3 @@
+id,case_count,created_at,day_window,message,status,type,village
+cccccccc-cccc-cccc-cccc-ccccccccccc1,4,2026-05-03 11:00:00,7,"Multiple children in Kaloleni have reported fever within the current reporting window. Follow up households and notify the nearest facility.",NEW,SYMPTOM_CLUSTER,Kaloleni
+cccccccc-cccc-cccc-cccc-ccccccccccc2,2,2026-05-03 11:10:00,3,"Two urgent respiratory-risk referrals were recorded near Voi. Confirm facility readiness before transfer.",ACKNOWLEDGED,REFERRAL_LOAD,Voi

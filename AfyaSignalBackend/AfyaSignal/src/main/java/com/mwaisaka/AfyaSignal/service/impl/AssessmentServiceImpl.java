@@ -5,6 +5,7 @@ import com.mwaisaka.AfyaSignal.dto.AssessmentResponse;
 import com.mwaisaka.AfyaSignal.entity.Assessment;
 import com.mwaisaka.AfyaSignal.entity.User;
 import com.mwaisaka.AfyaSignal.enums.TriageCategory;
+import com.mwaisaka.AfyaSignal.exception.ResourceNotFoundException;
 import com.mwaisaka.AfyaSignal.mapper.AssessmentMapper;
 import com.mwaisaka.AfyaSignal.repository.AssessmentRepository;
 import com.mwaisaka.AfyaSignal.repository.FacilityRepository;
@@ -36,7 +37,7 @@ public class AssessmentServiceImpl implements AssessmentService {
 
     public AssessmentResponse createAssessment(AssessmentRequest request, UUID chvId) {
         User chv = userRepository.findById(chvId)
-                .orElseThrow(() -> new RuntimeException("CHV not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("CHV not found"));
 
         Assessment assessment = assessmentMapper.toEntity(request);
         assessment.setChildId(generateChildId());

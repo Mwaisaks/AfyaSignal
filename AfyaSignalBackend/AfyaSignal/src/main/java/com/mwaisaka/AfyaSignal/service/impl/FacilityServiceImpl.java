@@ -1,6 +1,7 @@
 package com.mwaisaka.AfyaSignal.service.impl;
 
 import com.mwaisaka.AfyaSignal.dto.FacilityResponse;
+import com.mwaisaka.AfyaSignal.exception.ResourceNotFoundException;
 import com.mwaisaka.AfyaSignal.mapper.FacilityMapper;
 import com.mwaisaka.AfyaSignal.repository.FacilityRepository;
 import com.mwaisaka.AfyaSignal.service.FacilityService;
@@ -27,7 +28,7 @@ public class FacilityServiceImpl implements FacilityService {
     public FacilityResponse getFacilityById(UUID id) {
         return facilityRepository.findById(id)
                 .map(facilityMapper::toResponse)
-                .orElseThrow(() -> new RuntimeException("Facility not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Facility not found"));
     }
 
     @Override

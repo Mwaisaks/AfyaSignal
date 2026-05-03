@@ -8,6 +8,7 @@ import { UserCheck, LayoutDashboard, Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import type { ApiError } from '@/lib/api';
 
 const AfyaSignalLogo = () => (
   <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -35,7 +36,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { login, isLoading } = useAuth();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
-  const [email, setEmail] = useState("demo@afyasignal.com")
+  const [email, setEmail] = useState("admin@afyasignal.com")
   const [password, setPassword] = useState("demo123")
   const [error, setError] = useState('');
 
@@ -60,7 +61,8 @@ export default function LoginPage() {
       
       router.push(routes[selectedRole]);
     } catch (err) {
-      setError('Login failed. Please try again.');
+      const apiError = err as Partial<ApiError> | Error;
+      setError('message' in apiError && apiError.message ? apiError.message : 'Login failed. Please try again.');
     }
   };
 
@@ -149,7 +151,9 @@ export default function LoginPage() {
             <div className="mt-6 p-4 bg-muted/30 rounded-lg">
               <p className="text-xs text-muted-foreground mb-2 font-semibold">Demo Credentials:</p>
               <div className="space-y-1 text-xs text-muted-foreground">
-                <p>Email: <span className="font-mono">demo@afyasignal.com</span></p>
+                <p>Admin: <span className="font-mono">admin@afyasignal.com</span></p>
+                <p>CHV: <span className="font-mono">chv@afyasignal.com</span></p>
+                <p>Facility: <span className="font-mono">facility@afyasignal.com</span></p>
                 <p>Password: <span className="font-mono">demo123</span></p>
               </div>
             </div>

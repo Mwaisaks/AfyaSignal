@@ -1,23 +1,56 @@
-'use client';
+"use client";
 
-import { useAuth } from '@/lib/auth-context';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AssessmentChart } from '@/components/charts/assessment-chart';
-import { TriageDistributionChart } from '@/components/charts/triage-distribution-chart';
-import { CaseStatusWidget } from '@/components/case-status-widget';
-import { mockWeeklyAssessments, mockCases, mockAlerts, mockDashboardStats, mockCHVs, mockTriageDistribution } from '@/lib/mockData';
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth-context";
+import {
+  apiRequest,
+  type AlertResponse,
+  type AssessmentResponse,
+  type DashboardStatsResponse,
+} from "@/lib/api";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AssessmentChart } from "@/components/charts/assessment-chart";
+import { TriageDistributionChart } from "@/components/charts/triage-distribution-chart";
+import { CaseStatusWidget } from "@/components/case-status-widget";
+import { mockWeeklyAssessments } from "@/lib/mockData";
 
 export default function AdminDashboard() {
   const { user } = useAuth();
+  const [stats, setStats] = useState<DashboardStatsResponse | null>(null);
+  const [assessments, setAssessments] = useState<AssessmentResponse[]>([]);
+  const [alerts, setAlerts] = useState<AlertResponse[]>([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!user || user.role !== "admin") return;
+
+    Promise.all([
+      apiRequest<DashboardStatsResponse>("/api/dashboard/stats"),
+      apiRequest<AssessmentResponse[]>("/api/assessments"),
+      apiRequest<AlertResponse[]>("/api/alerts"),
+    ])
+      .then(([statsResponse, assessmentsResponse, alertsResponse]) => {
+        setStats(statsResponse);
+        setAssessments(assessmentsResponse);
+        setAlerts(alertsResponse);
+      })
+      .catch(() => setError("Unable to load admin dashboard data."));
+  }, [user]);
 
   if (!user || user.role !== 'admin') {
     return null;
   }
 
-  const totalAssessments = mockDashboardStats.totalAssessments;
-  const activeCases = mockCases.filter(c => c.status === 'open').length;
-  const pendingAlerts = mockAlerts.filter(a => a.status === 'new').length;
-  const totalChvs = mockCHVs.length;
+  const totalAssessments = stats?.totalAssessments ?? assessments.length;
+  const activeCases = assessments.filter(c => c.triageCategory === "EMERGENCY" || c.triageCategory === "URGENT").length;
+  const pendingAlerts = stats?.pendingAlerts ?? alerts.filter(a => a.status === "NEW").length;
+  const totalChvs = stats?.totalCHVs ?? 0;
+  const triageDistribution = [
+    { category: "Emergency", value: assessments.filter(a => a.triageCategory === "EMERGENCY").length, color: "#DC2626" },
+    { category: "Urgent", value: assessments.filter(a => a.triageCategory === "URGENT").length, color: "#EA580C" },
+    { category: "Priority", value: assessments.filter(a => a.triageCategory === "PRIORITY").length, color: "#2D7A4A" },
+    { category: "General", value: assessments.filter(a => a.triageCategory === "GENERAL").length, color: "#68C67C" },
+  ];
 
   return (
     <div className="space-y-6">
@@ -26,6 +59,12 @@ export default function AdminDashboard() {
         <h1 className="text-2xl font-bold text-foreground mb-2">Welcome, {user.name}</h1>
         <p className="text-muted-foreground">System Administrator Dashboard</p>
       </div>
+
+      {error && (
+        <div className="p-3 bg-destructive/10 border border-destructive/40 rounded-lg text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -88,7 +127,7 @@ export default function AdminDashboard() {
             <CardDescription>Current triage category breakdown</CardDescription>
           </CardHeader>
           <CardContent>
-            <TriageDistributionChart data={mockTriageDistribution} />
+            <TriageDistributionChart data={triageDistribution} />
           </CardContent>
         </Card>
       </div>
@@ -102,14 +141,27 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              {(mockCases ?? []).slice(0, 5).map(caseItem => (
+              {(assessments ?? []).slice(0, 5).map(caseItem => (
                 <div key={caseItem.id} className="flex items-start justify-between p-3 border border-border rounded-lg hover:bg-muted/30 transition-colors">
                   <div className="flex-1">
                     <p className="font-semibold text-foreground">{caseItem.childName}</p>
-                    <p className="text-xs text-muted-foreground">{caseItem.referralReason}</p>
+                    <p className="text-xs text-muted-foreground">{caseItem.village} • {caseItem.referralReason || caseItem.triageExplanation}</p>
                   </div>
                   <div className="text-right">
-                    <CaseStatusWidget status={caseItem.status} triageLevel={caseItem.triageLevel} />
+                    <CaseStatusWidget
+                      case={{
+                        id: caseItem.id,
+                        patientName: caseItem.childName,
+                        childId: caseItem.childId,
+                        village: caseItem.village,
+                        chvName: caseItem.chvName || "Unknown CHV",
+                        triageCategory: caseItem.triageCategory.toLowerCase() as any,
+                        status: caseItem.referralFacilityName ? "referred" : "open",
+                        createdAt: caseItem.createdAt,
+                        lastUpdated: caseItem.createdAt,
+                        referralFacility: caseItem.referralFacilityName,
+                      }}
+                    />
                   </div>
                 </div>
               ))}

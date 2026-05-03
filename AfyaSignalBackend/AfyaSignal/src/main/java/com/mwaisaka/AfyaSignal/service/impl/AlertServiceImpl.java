@@ -3,6 +3,7 @@ package com.mwaisaka.AfyaSignal.service.impl;
 import com.mwaisaka.AfyaSignal.dto.AlertResponse;
 import com.mwaisaka.AfyaSignal.entity.Alert;
 import com.mwaisaka.AfyaSignal.enums.AlertStatus;
+import com.mwaisaka.AfyaSignal.exception.ResourceNotFoundException;
 import com.mwaisaka.AfyaSignal.mapper.AlertMapper;
 import com.mwaisaka.AfyaSignal.repository.AlertRepository;
 import com.mwaisaka.AfyaSignal.repository.AssessmentRepository;
@@ -37,7 +38,7 @@ public class AlertServiceImpl implements AlertService {
 
     public AlertResponse acknowledgeAlert(UUID id) {
         Alert alert = alertRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Alert not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Alert not found"));
         alert.setStatus(AlertStatus.ACKNOWLEDGED);
         return alertMapper.toResponse(alertRepository.save(alert));
     }

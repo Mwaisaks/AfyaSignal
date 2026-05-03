@@ -1,7 +1,8 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useState, useCallback } from 'react';
-import type { User, UserRole } from './types';
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import type { User, UserRole } from "./types";
+import { loginRequest, mapBackendRole } from "./api";
 
 interface AuthContextType {
   user: User | null;
@@ -16,48 +17,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    const storedUser = localStorage.getItem("afyasignal_user");
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
   const login = useCallback(async (email: string, password: string, role: UserRole) => {
     setIsLoading(true);
     try {
-      // Simulate API call - in production, this would authenticate with your backend
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const auth = await loginRequest(email, password);
+      const backendRole = mapBackendRole(auth.role);
 
-      // Mock user data based on role
-      const mockUsers: Record<UserRole, User> = {
-        chv: {
-          id: 'user-chv-001',
-          name: 'Grace Mwangi',
-          role: 'chv',
-          email: email,
-          phone: '+254712345690',
-          village: 'Kibera',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Grace',
-        },
-        admin: {
-          id: 'user-admin-001',
-          name: 'Admin User',
-          role: 'admin',
-          email: email,
-          phone: '+254712345600',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Admin',
-        },
-        'health-facility': {
-          id: 'user-hf-001',
-          name: 'Health Facility Manager',
-          role: 'health-facility',
-          email: email,
-          facility: 'Kibera Health Center',
-          avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Facility',
-        },
+      if (backendRole !== role) {
+        throw new Error(`This account is registered as ${backendRole}. Select the matching role.`);
+      }
+
+      const authenticatedUser: User = {
+        id: auth.id,
+        name: auth.name,
+        role: backendRole,
+        email: auth.email,
+        village: auth.village || undefined,
+        facility: auth.facility || undefined,
+        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(auth.name)}`,
       };
 
-      setUser(mockUsers[role]);
+      localStorage.setItem("afyasignal_token", auth.token);
+      localStorage.setItem("afyasignal_user", JSON.stringify(authenticatedUser));
+      setUser(authenticatedUser);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   const logout = useCallback(() => {
+    localStorage.removeItem("afyasignal_token");
+    localStorage.removeItem("afyasignal_user");
     setUser(null);
   }, []);
 
@@ -71,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

@@ -2,6 +2,7 @@ package com.mwaisaka.AfyaSignal.service.impl;
 
 import com.mwaisaka.AfyaSignal.dto.AssessmentRequest;
 import com.mwaisaka.AfyaSignal.enums.TriageCategory;
+import com.mwaisaka.AfyaSignal.service.GeminiService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -12,7 +13,7 @@ import com.google.gson.JsonParser;
 
 @Service
 @Slf4j
-public class GeminiServiceImpl {
+public class GeminiServiceImpl implements GeminiService {
 
     private final RestClient restClient;
     private final String apiKey;
@@ -25,6 +26,7 @@ public class GeminiServiceImpl {
         this.restClient = RestClient.create();
     }
 
+    @Override
     public String generateExplanation(AssessmentRequest request, TriageCategory category) {
         try {
             String prompt = buildPrompt(request, category);

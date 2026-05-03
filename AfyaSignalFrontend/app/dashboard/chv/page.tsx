@@ -1,27 +1,67 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { AssessmentForm } from '@/components/assessment-form';
-import type { Assessment } from '@/lib/types';
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { apiRequest, type AssessmentRequest, type AssessmentResponse } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AssessmentForm } from "@/components/assessment-form";
+import type { Assessment } from "@/lib/types";
 
 export default function CHVDashboard() {
   const { user } = useAuth();
   const [showAssessmentForm, setShowAssessmentForm] = useState(false);
-  const [completedAssessments, setCompletedAssessments] = useState<Assessment[]>([]);
+  const [completedAssessments, setCompletedAssessments] = useState<AssessmentResponse[]>([]);
+  const [error, setError] = useState("");
 
-  const handleAssessmentSubmit = (assessment: Omit<Assessment, 'id' | 'timestamp' | 'chvId' | 'chvName'>) => {
-    const newAssessment: Assessment = {
-      ...assessment,
-      id: `assessment-${Date.now()}`,
-      timestamp: new Date().toISOString(),
-      chvId: user!.id,
-      chvName: user!.name,
+  useEffect(() => {
+    if (!user || user.role !== "chv") return;
+
+    apiRequest<AssessmentResponse[]>("/api/assessments/my")
+      .then(setCompletedAssessments)
+      .catch(() => setError("Unable to load your assessments."));
+  }, [user]);
+
+  const handleAssessmentSubmit = async (assessment: Omit<Assessment, "id" | "timestamp" | "chvId" | "chvName">) => {
+    setError("");
+
+    const ageMonths = assessment.patientInfo.ageUnit === "years"
+      ? assessment.patientInfo.age * 12
+      : assessment.patientInfo.age;
+
+    const payload: AssessmentRequest = {
+      childName: assessment.patientInfo.childName,
+      ageMonths,
+      parentName: assessment.patientInfo.parentName,
+      parentPhone: assessment.patientInfo.parentPhone,
+      village: assessment.patientInfo.village,
+      weight: assessment.vitals.weight,
+      fever: assessment.symptoms.fever,
+      feverDays: assessment.symptoms.feverDays,
+      cough: assessment.symptoms.cough,
+      coughDays: assessment.symptoms.coughDays,
+      diarrhea: assessment.symptoms.diarrhea,
+      diarrheaDays: assessment.symptoms.diarrheaDays,
+      difficultyBreathing: assessment.symptoms.difficulty_breathing,
+      rash: assessment.symptoms.rash,
+      vomiting: assessment.symptoms.vomiting,
+      lethargy: assessment.symptoms.lethargy,
+      seizures: assessment.symptoms.seizures,
+      otherSymptoms: assessment.symptoms.other,
+      temperature: assessment.vitals.temperature,
+      respiratoryRate: assessment.vitals.respiratory_rate,
     };
-    setCompletedAssessments(prev => [newAssessment, ...prev]);
-    setShowAssessmentForm(false);
+
+    try {
+      const saved = await apiRequest<AssessmentResponse>("/api/assessments", {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      setCompletedAssessments(prev => [saved, ...prev]);
+      setShowAssessmentForm(false);
+    } catch {
+      setError("Unable to submit assessment. Please check the fields and try again.");
+    }
   };
 
   if (!user || user.role !== 'chv') {
@@ -37,6 +77,12 @@ export default function CHVDashboard() {
           {user.village ? `Community Health Volunteer • ${user.village}` : 'Community Health Volunteer'}
         </p>
       </div>
+
+      {error && (
+        <div className="p-3 bg-destructive/10 border border-destructive/40 rounded-lg text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -123,20 +169,17 @@ export default function CHVDashboard() {
                 <div key={assessment.id} className="p-4 border border-border rounded-lg hover:bg-muted/30 transition-colors">
                   <div className="flex items-start justify-between mb-2">
                     <div>
-                      <p className="font-semibold text-foreground">{assessment.patientInfo.childName}</p>
-                      <p className="text-xs text-muted-foreground">{assessment.patientInfo.childId}</p>
+                      <p className="font-semibold text-foreground">{assessment.childName}</p>
+                      <p className="text-xs text-muted-foreground">{assessment.childId}</p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      assessment.status === 'completed' 
-                        ? 'bg-accent/20 text-accent-foreground'
-                        : 'bg-muted text-muted-foreground'
-                    }`}>
-                      {assessment.status}
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-accent/20 text-accent-foreground">
+                      {assessment.triageCategory}
                     </span>
                   </div>
                   <div className="text-sm text-muted-foreground space-y-1">
-                    <p>Age: {assessment.patientInfo.age} {assessment.patientInfo.ageUnit}</p>
-                    <p>Symptoms: {Object.values(assessment.symptoms).filter(v => v === true).length} reported</p>
+                    <p>Age: {assessment.ageMonths} months</p>
+                    <p>Village: {assessment.village}</p>
+                    {assessment.triageExplanation && <p>{assessment.triageExplanation}</p>}
                   </div>
                 </div>
               ))}

@@ -1,49 +1,43 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
+import { apiRequest, type AlertResponse } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { mockAlerts } from '@/lib/mockData';
-import type { Alert } from '@/lib/types';
 
 export default function AlertsPage() {
   const { user } = useAuth();
-  const [alerts, setAlerts] = useState<Alert[]>(mockAlerts);
+  const [alerts, setAlerts] = useState<AlertResponse[]>([]);
   const [filter, setFilter] = useState<'all' | 'new' | 'acknowledged' | 'resolved'>('all');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!user || user.role !== 'admin') return;
+
+    apiRequest<AlertResponse[]>('/api/alerts')
+      .then(setAlerts)
+      .catch(() => setError('Unable to load alerts.'));
+  }, [user]);
 
   if (!user || user.role !== 'admin') {
     return null;
   }
 
-  const filtered = alerts.filter(a => filter === 'all' || a.status === filter);
+  const filtered = alerts.filter(a => filter === 'all' || a.status.toLowerCase() === filter);
 
-  const handleAcknowledge = (id: string) => {
-    setAlerts(alerts.map(a => a.id === id ? { ...a, status: 'acknowledged' } : a));
-  };
-
-  const handleResolve = (id: string) => {
-    setAlerts(alerts.map(a => a.id === id ? { ...a, status: 'resolved' } : a));
-  };
-
-  const severityColors = {
-    critical: 'text-red-700 bg-red-100 border-red-200',
-    high: 'text-orange-700 bg-orange-100 border-orange-200',
-    medium: 'text-yellow-700 bg-yellow-100 border-yellow-200',
+  const handleAcknowledge = async (id: string) => {
+    const updated = await apiRequest<AlertResponse>(`/api/alerts/${id}/acknowledge`, {
+      method: 'PATCH',
+    });
+    setAlerts(alerts.map(a => a.id === id ? updated : a));
   };
 
   const statusColors = {
-    new: 'bg-blue-100 text-blue-700',
-    acknowledged: 'bg-yellow-100 text-yellow-700',
-    resolved: 'bg-green-100 text-green-700',
-  };
-
-  const typeLabels = {
-    emergency: '🚨 Emergency',
-    urgent: '⚠️ Urgent',
-    'referral-pending': '📋 Referral Pending',
-    'follow-up-due': '📅 Follow-up Due',
+    NEW: 'bg-blue-100 text-blue-700',
+    ACKNOWLEDGED: 'bg-yellow-100 text-yellow-700',
+    RESOLVED: 'bg-green-100 text-green-700',
   };
 
   return (
@@ -57,6 +51,12 @@ export default function AlertsPage() {
           <Button variant="outline">Back to Dashboard</Button>
         </Link>
       </div>
+
+      {error && (
+        <div className="p-3 bg-destructive/10 border border-destructive/40 rounded-lg text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       {/* Filter Buttons */}
       <div className="flex gap-2 flex-wrap">
@@ -72,7 +72,7 @@ export default function AlertsPage() {
           >
             {status.charAt(0).toUpperCase() + status.slice(1)}
             {' '}
-            ({alerts.filter(a => status === 'all' || a.status === status).length})
+            ({alerts.filter(a => status === 'all' || a.status.toLowerCase() === status).length})
           </button>
         ))}
       </div>
@@ -90,9 +90,9 @@ export default function AlertsPage() {
         ) : (
           filtered.map(alert => (
             <Card key={alert.id} className={`border-l-4 ${
-              alert.severity === 'critical'
+              alert.status === 'NEW'
                 ? 'border-l-red-500'
-                : alert.severity === 'high'
+                : alert.status === 'ACKNOWLEDGED'
                 ? 'border-l-orange-500'
                 : 'border-l-yellow-500'
             }`}>
@@ -102,12 +102,12 @@ export default function AlertsPage() {
                   <div className="md:col-span-3">
                     <div className="flex items-start gap-3 mb-3">
                       <div>
-                        <p className="font-semibold text-foreground">{alert.patientName}</p>
+                        <p className="font-semibold text-foreground">{alert.village}</p>
                         <p className="text-sm text-muted-foreground">{alert.message}</p>
                       </div>
                     </div>
                     <div className="space-y-1 text-xs text-muted-foreground">
-                      <p>Case ID: <span className="font-mono text-foreground">{alert.caseId}</span></p>
+                      <p>Cases: <span className="font-mono text-foreground">{alert.caseCount || 0}</span></p>
                       <p>Created: {new Date(alert.createdAt).toLocaleString()}</p>
                     </div>
                   </div>
@@ -116,28 +116,28 @@ export default function AlertsPage() {
                   <div className="md:col-span-2 space-y-2">
                     <div>
                       <span className={`inline-block px-3 py-1 rounded text-xs font-semibold ${
-                        severityColors[alert.severity]
+                        alert.status === 'NEW' ? 'text-red-700 bg-red-100 border-red-200' : 'text-orange-700 bg-orange-100 border-orange-200'
                       }`}>
-                        {alert.severity.charAt(0).toUpperCase() + alert.severity.slice(1)}
+                        {alert.status === 'NEW' ? 'Needs Review' : 'Reviewed'}
                       </span>
                     </div>
                     <div>
                       <span className="inline-block px-3 py-1 rounded text-xs font-semibold bg-muted text-muted-foreground">
-                        {typeLabels[alert.type]}
+                        {alert.type}
                       </span>
                     </div>
                     <div>
                       <span className={`inline-block px-3 py-1 rounded text-xs font-semibold ${
                         statusColors[alert.status]
                       }`}>
-                        {alert.status.charAt(0).toUpperCase() + alert.status.slice(1)}
+                        {alert.status}
                       </span>
                     </div>
                   </div>
 
                   {/* Actions */}
                   <div className="md:col-span-1 flex gap-2">
-                    {alert.status === 'new' && (
+                    {alert.status === 'NEW' && (
                       <Button
                         size="sm"
                         variant="outline"
@@ -145,15 +145,6 @@ export default function AlertsPage() {
                         className="flex-1"
                       >
                         Acknowledge
-                      </Button>
-                    )}
-                    {alert.status !== 'resolved' && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleResolve(alert.id)}
-                        className="flex-1 bg-primary hover:bg-primary/90"
-                      >
-                        Resolve
                       </Button>
                     )}
                   </div>
@@ -180,7 +171,7 @@ export default function AlertsPage() {
             <CardTitle className="text-sm font-medium text-red-700">Critical</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-red-600">{alerts.filter(a => a.severity === 'critical').length}</p>
+            <p className="text-2xl font-bold text-red-600">{alerts.filter(a => a.status === 'NEW').length}</p>
           </CardContent>
         </Card>
 
@@ -189,7 +180,7 @@ export default function AlertsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">New</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-blue-600">{alerts.filter(a => a.status === 'new').length}</p>
+            <p className="text-2xl font-bold text-blue-600">{alerts.filter(a => a.status === 'NEW').length}</p>
           </CardContent>
         </Card>
 
@@ -198,7 +189,7 @@ export default function AlertsPage() {
             <CardTitle className="text-sm font-medium text-muted-foreground">Resolved</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-green-600">{alerts.filter(a => a.status === 'resolved').length}</p>
+            <p className="text-2xl font-bold text-green-600">{alerts.filter(a => a.status === 'RESOLVED').length}</p>
           </CardContent>
         </Card>
       </div>

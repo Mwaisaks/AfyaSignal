@@ -1,0 +1,5 @@
+id,available_beds,name,operating_hours,phone,sub_county,total_beds,village,manager_id
+aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1,18,Moi County Referral Hospital Voi,24 hours,+254700000101,Voi,160,Voi,33333333-3333-3333-3333-333333333333
+aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2,7,Mwatate Sub County Hospital,24 hours,+254700000102,Mwatate,48,Mwatate,33333333-3333-3333-3333-333333333333
+aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa3,3,Tausa Dispensary,8:00 AM - 5:00 PM,+254700000103,Voi,12,Tausa,33333333-3333-3333-3333-333333333333
+aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa4,5,Kaloleni Health Centre,8:00 AM - 6:00 PM,+254700000104,Voi,20,Kaloleni,33333333-3333-3333-3333-333333333333

@@ -1,92 +1,30 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { ChevronDown } from 'lucide-react';
-
-interface Referral {
-  caseId: string;
-  childName: string;
-  age: number;
-  riskLevel: 'LOW' | 'MODERATE' | 'CRITICAL';
-  chvName: string;
-  village: string;
-  referredAt: string;
-  status: 'Awaiting Arrival' | 'Admitted' | 'Treated & Discharged';
-}
-
-// Mock referral data
-const mockReferrals: Referral[] = [
-  {
-    caseId: 'CHILD-2026-0001',
-    childName: 'Amara Kipchoge',
-    age: 18,
-    riskLevel: 'CRITICAL',
-    chvName: 'Grace Mwangi',
-    village: 'Kibera',
-    referredAt: '2026-05-02 10:30',
-    status: 'Awaiting Arrival',
-  },
-  {
-    caseId: 'CHILD-2026-0042',
-    childName: 'David Kiplagat',
-    age: 24,
-    riskLevel: 'MODERATE',
-    chvName: 'Samuel Kiplagat',
-    village: 'Mathare',
-    referredAt: '2026-05-02 09:15',
-    status: 'Admitted',
-  },
-  {
-    caseId: 'CHILD-2026-0089',
-    childName: 'Zainab Mwangi',
-    age: 12,
-    riskLevel: 'CRITICAL',
-    chvName: 'Peter Ochieng',
-    village: 'Kibera',
-    referredAt: '2026-05-01 16:45',
-    status: 'Admitted',
-  },
-  {
-    caseId: 'CHILD-2026-0056',
-    childName: 'Joseph Kipkemboi',
-    age: 30,
-    riskLevel: 'LOW',
-    chvName: 'Elizabeth Kipchoge',
-    village: 'Mukuru',
-    referredAt: '2026-05-01 14:20',
-    status: 'Treated & Discharged',
-  },
-  {
-    caseId: 'CHILD-2026-0123',
-    childName: 'Fatima Hassan',
-    age: 8,
-    riskLevel: 'MODERATE',
-    chvName: 'Rose Mwangi',
-    village: 'Mathare',
-    referredAt: '2026-04-30 11:00',
-    status: 'Treated & Discharged',
-  },
-];
+import { useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth-context";
+import { apiRequest, type AssessmentResponse } from "@/lib/api";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function FacilityDashboard() {
   const { user } = useAuth();
-  const [referrals, setReferrals] = useState<Referral[]>(mockReferrals);
-  const [expandedRow, setExpandedRow] = useState<string | null>(null);
+  const [referrals, setReferrals] = useState<AssessmentResponse[]>([]);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!user || user.role !== "health-facility") return;
+
+    apiRequest<AssessmentResponse[]>("/api/assessments/emergency")
+      .then(setReferrals)
+      .catch(() => setError("Unable to load incoming referrals."));
+  }, [user]);
 
   if (!user || user.role !== 'health-facility') {
     return null;
   }
 
-  const incomingReferrals = referrals.filter(r => r.status === 'Awaiting Arrival').length;
-  const criticalCases = referrals.filter(r => r.riskLevel === 'CRITICAL').length;
-  const completedCases = referrals.filter(r => r.status === 'Treated & Discharged').length;
-
-  const handleStatusChange = (caseId: string, newStatus: Referral['status']) => {
-    setReferrals(referrals.map(r => r.caseId === caseId ? { ...r, status: newStatus } : r));
-  };
+  const incomingReferrals = referrals.length;
+  const criticalCases = referrals.filter(r => r.triageCategory === "EMERGENCY").length;
+  const completedCases = 0;
 
   return (
     <div className="space-y-6">
@@ -97,6 +35,12 @@ export default function FacilityDashboard() {
           {user.facility ? `${user.facility} • Facility Manager` : 'Facility Manager'}
         </p>
       </div>
+
+      {error && (
+        <div className="p-3 bg-destructive/10 border border-destructive/40 rounded-lg text-sm text-destructive">
+          {error}
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -165,50 +109,29 @@ export default function FacilityDashboard() {
               </thead>
               <tbody>
                 {(referrals ?? []).map(referral => (
-                  <tr key={referral.caseId} className="border-b border-border hover:bg-muted/30 transition-colors">
-                    <td className="py-3 px-4 font-mono text-xs text-foreground">{referral.caseId}</td>
+                  <tr key={referral.id} className="border-b border-border hover:bg-muted/30 transition-colors">
+                    <td className="py-3 px-4 font-mono text-xs text-foreground">{referral.childId}</td>
                     <td className="py-3 px-4 font-medium text-foreground">{referral.childName}</td>
-                    <td className="py-3 px-4 text-muted-foreground">{referral.age} mo</td>
+                    <td className="py-3 px-4 text-muted-foreground">{referral.ageMonths} mo</td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                        referral.riskLevel === 'CRITICAL' ? 'bg-red-100 text-red-900' :
-                        referral.riskLevel === 'MODERATE' ? 'bg-orange-100 text-orange-900' :
+                        referral.triageCategory === 'EMERGENCY' ? 'bg-red-100 text-red-900' :
+                        referral.triageCategory === 'URGENT' ? 'bg-orange-100 text-orange-900' :
                         'bg-green-100 text-green-900'
                       }`}>
-                        {referral.riskLevel}
+                        {referral.triageCategory}
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-muted-foreground">{referral.chvName}</td>
+                    <td className="py-3 px-4 text-muted-foreground">{referral.chvName || 'Unknown CHV'}</td>
                     <td className="py-3 px-4 text-muted-foreground">{referral.village}</td>
-                    <td className="py-3 px-4 text-xs text-muted-foreground">{referral.referredAt}</td>
+                    <td className="py-3 px-4 text-xs text-muted-foreground">{new Date(referral.createdAt).toLocaleString()}</td>
                     <td className="py-3 px-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                        referral.status === 'Awaiting Arrival' ? 'bg-yellow-100 text-yellow-900' :
-                        referral.status === 'Admitted' ? 'bg-blue-100 text-blue-900' :
-                        'bg-green-100 text-green-900'
-                      }`}>
-                        {referral.status}
+                      <span className="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-900">
+                        Awaiting Review
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <div className="relative group">
-                        <button className="flex items-center gap-1 text-primary hover:text-primary/80 text-sm font-semibold">
-                          Update <ChevronDown size={16} />
-                        </button>
-                        <div className="hidden group-hover:block absolute right-0 mt-2 w-48 bg-card border border-border rounded-lg shadow-lg z-10">
-                          {['Awaiting Arrival', 'Admitted', 'Treated & Discharged'].map(status => (
-                            <button
-                              key={status}
-                              onClick={() => handleStatusChange(referral.caseId, status as Referral['status'])}
-                              className={`block w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors ${
-                                referral.status === status ? 'bg-primary/10 text-primary font-semibold' : 'text-foreground'
-                              }`}
-                            >
-                              {status}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
+                      <span className="text-xs text-muted-foreground">{referral.referralReason || 'Referral required'}</span>
                     </td>
                   </tr>
                 ))}

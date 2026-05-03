@@ -1,13 +1,24 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
+import { apiRequest, type FacilityResponse } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { mockHealthFacilities } from '@/lib/mockData';
 
 export default function FacilitiesPage() {
   const { user } = useAuth();
+  const [facilities, setFacilities] = useState<FacilityResponse[]>([]);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (!user) return;
+
+    apiRequest<FacilityResponse[]>('/api/facilities')
+      .then(setFacilities)
+      .catch(() => setError('Unable to load facilities.'));
+  }, [user]);
 
   if (!user) {
     return null;
@@ -25,24 +36,36 @@ export default function FacilitiesPage() {
         </Link>
       </div>
 
+      {error && (
+        <div className="p-3 bg-destructive/10 border border-destructive/40 rounded-lg text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {mockHealthFacilities.map(facility => (
+        {facilities.map(facility => {
+          const totalBeds = facility.totalBeds || 0;
+          const availableBeds = facility.availableBeds || 0;
+          const currentPatients = Math.max(totalBeds - availableBeds, 0);
+          const occupancy = totalBeds > 0 ? (currentPatients / totalBeds) * 100 : 0;
+
+          return (
           <Card key={facility.id} className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="text-lg">{facility.name}</CardTitle>
-              <CardDescription>{facility.village}, {facility.district}</CardDescription>
+              <CardDescription>{facility.village}, {facility.subCounty}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-muted-foreground font-semibold mb-1">PHONE</p>
                   <a href={`tel:${facility.phone}`} className="text-sm text-primary hover:underline font-mono">
-                    {facility.phone}
+                    {facility.phone || 'Not listed'}
                   </a>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-semibold mb-1">CAPACITY</p>
-                  <p className="text-sm font-semibold text-foreground">{facility.capacity} beds</p>
+                  <p className="text-sm font-semibold text-foreground">{totalBeds || 'Unknown'} beds</p>
                 </div>
               </div>
 
@@ -52,11 +75,11 @@ export default function FacilitiesPage() {
                   <div className="flex-1 bg-border rounded-full h-2 overflow-hidden">
                     <div
                       className="h-full bg-primary transition-all"
-                      style={{ width: `${(facility.currentPatients / facility.capacity) * 100}%` }}
+                      style={{ width: `${occupancy}%` }}
                     />
                   </div>
                   <p className="text-sm font-semibold text-foreground">
-                    {facility.currentPatients}/{facility.capacity}
+                    {currentPatients}/{totalBeds || 0}
                   </p>
                 </div>
               </div>
@@ -65,16 +88,16 @@ export default function FacilitiesPage() {
                 <p className="text-xs text-muted-foreground mb-2">AVAILABILITY</p>
                 <div className="flex items-center gap-2">
                   <div className={`w-3 h-3 rounded-full ${
-                    facility.currentPatients < facility.capacity * 0.8
+                    occupancy < 80
                       ? 'bg-green-500'
-                      : facility.currentPatients < facility.capacity * 0.95
+                      : occupancy < 95
                       ? 'bg-yellow-500'
                       : 'bg-red-500'
                   }`} />
                   <span className="text-sm font-semibold text-foreground">
-                    {facility.currentPatients < facility.capacity * 0.8
+                    {occupancy < 80
                       ? 'Available'
-                      : facility.currentPatients < facility.capacity * 0.95
+                      : occupancy < 95
                       ? 'Limited Availability'
                       : 'Near Capacity'}
                   </span>
@@ -86,7 +109,7 @@ export default function FacilitiesPage() {
               </Button>
             </CardContent>
           </Card>
-        ))}
+        )})}
       </div>
 
       {/* Quick Reference */}
@@ -99,17 +122,17 @@ export default function FacilitiesPage() {
           <div className="space-y-3">
             <div className="p-3 border-l-4 border-red-500 bg-red-50 rounded">
               <p className="font-semibold text-red-900">Emergency Hospital</p>
-              <p className="text-sm text-red-700">{mockHealthFacilities[3].name}</p>
-              <a href={`tel:${mockHealthFacilities[3].phone}`} className="text-sm text-red-600 hover:underline font-mono">
-                {mockHealthFacilities[3].phone}
+              <p className="text-sm text-red-700">{facilities[0]?.name || 'No facility loaded'}</p>
+              <a href={`tel:${facilities[0]?.phone || ''}`} className="text-sm text-red-600 hover:underline font-mono">
+                {facilities[0]?.phone || 'Not listed'}
               </a>
             </div>
             
             <div className="p-3 border-l-4 border-primary bg-primary/5 rounded">
               <p className="font-semibold text-primary">Primary Referral</p>
-              <p className="text-sm text-primary/80">{mockHealthFacilities[0].name}</p>
-              <a href={`tel:${mockHealthFacilities[0].phone}`} className="text-sm text-primary hover:underline font-mono">
-                {mockHealthFacilities[0].phone}
+              <p className="text-sm text-primary/80">{facilities[1]?.name || facilities[0]?.name || 'No facility loaded'}</p>
+              <a href={`tel:${facilities[1]?.phone || facilities[0]?.phone || ''}`} className="text-sm text-primary hover:underline font-mono">
+                {facilities[1]?.phone || facilities[0]?.phone || 'Not listed'}
               </a>
             </div>
           </div>
