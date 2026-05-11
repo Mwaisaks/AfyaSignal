@@ -9,8 +9,7 @@ export default function AboutPage() {
       <header className="bg-card border-b border-border sticky top-0">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="text-2xl">🏥</span>
-            <h1 className="font-bold text-foreground">AfyaSignal</h1>
+            <img src="/apple-icon.png" alt="AfyaSignal" className="w-8 h-8" />            <h1 className="font-bold text-foreground">AfyaSignal</h1>
           </div>
           <Link href="/">
             <Button variant="outline">Back to Login</Button>

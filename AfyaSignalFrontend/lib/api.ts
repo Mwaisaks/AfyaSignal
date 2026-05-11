@@ -1,6 +1,11 @@
 import type { UserRole } from './types';
 
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://afyasignal.onrender.com';
+const configuredApiBaseUrl =
+  process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL;
+
+export const API_BASE_URL = (
+  configuredApiBaseUrl || 'https://afyasignal.onrender.com'
+).replace(/\/$/, '');
 
 export interface ApiError {
   timestamp?: string;

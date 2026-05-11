@@ -35,7 +35,7 @@ export default function AdminLayout({
       <header className="bg-card border-b border-border shadow-sm sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">🏥</span>
+            <img src="/apple-icon.png" alt="AfyaSignal" className="w-8 h-8" />
             <div>
               <h1 className="font-bold text-foreground">AfyaSignal Admin</h1>
               <p className="text-xs text-muted-foreground">Management Dashboard</p>

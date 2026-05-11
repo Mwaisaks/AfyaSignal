@@ -1,10 +1,7 @@
 import type { Metadata } from 'next'
-import { Plus_Jakarta_Sans } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { AuthProvider } from '@/lib/auth-context'
 import '@/styles/globals.css'
-
-const plusJakarta = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: 'AfyaSignal - Health Triage System',
@@ -36,7 +33,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="bg-background">
-      <body className={`${plusJakarta.className} font-sans antialiased`}>
+      <body className="font-sans antialiased">
         <AuthProvider>
           {children}
         </AuthProvider>

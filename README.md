@@ -90,3 +90,4 @@ Future improvements include:
 - **Integration with national health systems** for seamless data sharing
 - **More advanced outbreak prediction models** using historical case data
 
+![img.png](img.png)I
