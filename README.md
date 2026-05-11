@@ -1,4 +1,4 @@
-# AfyaSignal — Devpost Submission
+# AfyaSignal
 
 ## Inspiration
 
