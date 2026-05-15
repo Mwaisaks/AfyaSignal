@@ -13,6 +13,14 @@ import { AssessmentChart } from "@/components/charts/assessment-chart";
 import { TriageDistributionChart } from "@/components/charts/triage-distribution-chart";
 import { CaseStatusWidget } from "@/components/case-status-widget";
 import { mockWeeklyAssessments } from "@/lib/mockData";
+import type { TriageCategory } from "@/lib/types";
+
+const triageCategoryMap: Record<AssessmentResponse["triageCategory"], TriageCategory> = {
+  EMERGENCY: "emergency",
+  URGENT: "urgent",
+  PRIORITY: "priority",
+  GENERAL: "general",
+};
 
 export default function AdminDashboard() {
   const { user } = useAuth();
@@ -155,7 +163,7 @@ export default function AdminDashboard() {
                         childId: caseItem.childId,
                         village: caseItem.village,
                         chvName: caseItem.chvName || "Unknown CHV",
-                        triageCategory: caseItem.triageCategory.toLowerCase() as any,
+                        triageCategory: triageCategoryMap[caseItem.triageCategory],
                         status: caseItem.referralFacilityName ? "referred" : "open",
                         createdAt: caseItem.createdAt,
                         lastUpdated: caseItem.createdAt,

@@ -3,16 +3,18 @@ services:
   db:
     image: postgres:16-alpine
     container_name: afyasignal-db
+    working_dir: /workspace
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-afyasignal}
-      POSTGRES_USER: ${POSTGRES_USER:-afyasignal}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-afyasignal123}
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB is required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER is required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
     ports:
       - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./database/import:/workspace/database/import:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-afyasignal} -d ${POSTGRES_DB:-afyasignal}"]
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
       interval: 10s
       timeout: 5s
       retries: 5

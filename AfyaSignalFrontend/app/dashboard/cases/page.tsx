@@ -9,11 +9,13 @@ import { Input } from '@/components/ui/input';
 import { mockCases } from '@/lib/mockData';
 import type { TriageCategory } from '@/lib/types';
 
+type CaseStatusFilter = 'all' | 'open' | 'referred' | 'completed';
+
 export default function CasesPage() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<TriageCategory | 'all'>('all');
-  const [filterStatus, setFilterStatus] = useState<'all' | 'open' | 'referred' | 'completed'>('all');
+  const [filterStatus, setFilterStatus] = useState<CaseStatusFilter>('all');
 
   if (!user || user.role !== 'chv') {
     return null;
@@ -72,7 +74,7 @@ export default function CasesPage() {
               <label className="block text-sm font-semibold text-foreground mb-2">Category</label>
               <select
                 value={filterCategory}
-                onChange={(e) => setFilterCategory(e.target.value as any)}
+                onChange={(e) => setFilterCategory(e.target.value as TriageCategory | 'all')}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-input"
               >
                 <option value="all">All Categories</option>
@@ -87,7 +89,7 @@ export default function CasesPage() {
               <label className="block text-sm font-semibold text-foreground mb-2">Status</label>
               <select
                 value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as any)}
+                onChange={(e) => setFilterStatus(e.target.value as CaseStatusFilter)}
                 className="w-full px-3 py-2 border border-border rounded-lg bg-input"
               >
                 <option value="all">All Status</option>

@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import type { Assessment, PatientInfo, Symptoms, Vitals } from '@/lib/types';
-import { villages, commonSymptoms } from '@/lib/mockData';
+import { villages } from '@/lib/mockData';
 
 interface AssessmentFormProps {
   onSubmit: (assessment: Omit<Assessment, 'id' | 'timestamp' | 'chvId' | 'chvName'>) => void;
@@ -21,13 +21,9 @@ const generateCaseId = () => {
   return `CHILD-2026-${randomNumber}`;
 };
 
-export function AssessmentForm({ onSubmit, onCancel, chvName, chvId }: AssessmentFormProps) {
+export function AssessmentForm({ onSubmit, onCancel, chvName: _chvName, chvId: _chvId }: AssessmentFormProps) {
   const [step, setStep] = useState<FormStep>(1);
-  const [generatedCaseId, setGeneratedCaseId] = useState<string>('');
-  
-  useEffect(() => {
-    setGeneratedCaseId(generateCaseId());
-  }, []);
+  const [generatedCaseId] = useState<string>(() => generateCaseId());
   
   const [patientInfo, setPatientInfo] = useState<PatientInfo>({
     childId: '',
@@ -57,15 +53,15 @@ export function AssessmentForm({ onSubmit, onCancel, chvName, chvId }: Assessmen
     weight: undefined,
   });
 
-  const handlePatientChange = (field: keyof PatientInfo, value: any) => {
+  const handlePatientChange = <K extends keyof PatientInfo>(field: K, value: PatientInfo[K]) => {
     setPatientInfo(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSymptomChange = (symptom: keyof Symptoms, value: any) => {
+  const handleSymptomChange = <K extends keyof Symptoms>(symptom: K, value: Symptoms[K]) => {
     setSymptoms(prev => ({ ...prev, [symptom]: value }));
   };
 
-  const handleVitalChange = (vital: keyof Vitals, value: any) => {
+  const handleVitalChange = (vital: keyof Vitals, value: string) => {
     setVitals(prev => ({ ...prev, [vital]: value === '' ? undefined : parseFloat(value) }));
   };
 
@@ -86,9 +82,6 @@ export function AssessmentForm({ onSubmit, onCancel, chvName, chvId }: Assessmen
     };
     onSubmit(assessmentData);
   };
-  const isStep2Valid = true; // Symptoms are optional
-  const isStep3Valid = true; // At least one vital can be recorded
-
   return (
     <Card className="w-full">
       <CardHeader>
@@ -131,7 +124,7 @@ export function AssessmentForm({ onSubmit, onCancel, chvName, chvId }: Assessmen
                 <label className="block text-sm font-semibold text-foreground mb-2">Age Unit *</label>
                 <select
                   value={patientInfo.ageUnit}
-                  onChange={(e) => handlePatientChange('ageUnit', e.target.value)}
+                  onChange={(e) => handlePatientChange('ageUnit', e.target.value as PatientInfo['ageUnit'])}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-input"
                 >
                   <option value="months">Months</option>

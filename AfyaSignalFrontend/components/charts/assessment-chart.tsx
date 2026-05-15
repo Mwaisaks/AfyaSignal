@@ -1,6 +1,6 @@
 'use client';
 
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface AssessmentData {
   day: string;
@@ -30,7 +30,7 @@ export function AssessmentChart({ data }: AssessmentChartProps) {
         />
         <Legend 
           wrapperStyle={{ paddingTop: '16px' }}
-          formatter={(value, props) => (
+          formatter={(value) => (
             <span style={{ color: 'hsl(var(--foreground))' }}>{value}</span>
           )}
         />

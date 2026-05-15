@@ -16,7 +16,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (!user) {
-      router.push('/');
+      router.push('/login');
     }
   }, [user, router]);
 
@@ -26,7 +26,7 @@ export default function DashboardLayout({
 
   const handleLogout = () => {
     logout();
-    router.push('/');
+    router.push('/login');
   };
 
   return (
@@ -34,13 +34,13 @@ export default function DashboardLayout({
       {/* Header */}
       <header className="bg-card border-b border-border shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3">
             <img src="/apple-icon.png" alt="AfyaSignal" className="w-8 h-8" />
             <div>
               <h1 className="font-bold text-foreground">AfyaSignal</h1>
               <p className="text-xs text-muted-foreground">Health Triage System</p>
             </div>
-          </div>
+          </Link>
           
           <div className="flex items-center gap-4">
             <div className="text-right">

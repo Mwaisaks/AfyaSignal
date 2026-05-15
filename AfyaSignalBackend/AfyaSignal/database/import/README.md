@@ -6,7 +6,7 @@ The app no longer inserts demo data automatically on startup. To load sample ope
 
 ```bash
 docker compose up -d db
-PGPASSWORD=afyasignal123 psql -h localhost -p 5433 -U afyasignal -d afyasignal -f database/import/import_demo_data.sql
+docker compose exec -T db sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f database/import/import_demo_data.sql'
 ```
 
 The importer uses stable UUIDs and upserts records, so running it again updates the same rows instead of creating duplicates.

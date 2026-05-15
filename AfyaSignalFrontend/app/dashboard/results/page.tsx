@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { TriageResult } from '@/components/triage-result';
 import type { TriageCategory } from '@/lib/types';
 import { mockHealthFacilities } from '@/lib/mockData';

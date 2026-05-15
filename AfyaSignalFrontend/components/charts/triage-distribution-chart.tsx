@@ -41,7 +41,7 @@ export function TriageDistributionChart({ data }: TriageDistributionChartProps) 
         />
         <Legend 
           wrapperStyle={{ paddingTop: '16px' }}
-          formatter={(value, props) => (
+          formatter={(value) => (
             <span style={{ color: 'hsl(var(--foreground))' }}>{value}</span>
           )}
         />

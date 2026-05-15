@@ -5,7 +5,9 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
 import { apiRequest, type AlertResponse } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+const alertFilters = ['all', 'new', 'acknowledged', 'resolved'] as const;
 
 export default function AlertsPage() {
   const { user } = useAuth();
@@ -60,10 +62,10 @@ export default function AlertsPage() {
 
       {/* Filter Buttons */}
       <div className="flex gap-2 flex-wrap">
-        {['all', 'new', 'acknowledged', 'resolved'].map(status => (
+        {alertFilters.map(status => (
           <button
             key={status}
-            onClick={() => setFilter(status as any)}
+            onClick={() => setFilter(status)}
             className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
               filter === status
                 ? 'bg-primary text-primary-foreground'
