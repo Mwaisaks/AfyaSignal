@@ -147,3 +147,36 @@ export async function loginRequest(email: string, password: string): Promise<Aut
     body: JSON.stringify({ email, password }),
   });
 }
+
+export interface NotificationResponse {
+  id: string;
+  title: string;
+  message: string;
+  type:
+    | 'ASSESSMENT_SUBMITTED'
+    | 'CRITICAL_CASE_FLAGGED'
+    | 'OUTBREAK_ALERT_GENERATED'
+    | 'ALERT_ACKNOWLEDGED'
+    | 'REFERRAL_INCOMING'
+    | 'REFERRAL_ACKNOWLEDGED';
+  referenceId?: string;
+  referenceType?: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+export async function getNotifications(): Promise<NotificationResponse[]> {
+  return apiRequest<NotificationResponse[]>('/api/notifications');
+}
+
+export async function getUnreadCount(): Promise<number> {
+  return apiRequest<number>('/api/notifications/unread/count');
+}
+
+export async function markNotificationAsRead(id: string): Promise<void> {
+  return apiRequest<void>(`/api/notifications/${id}/read`, { method: 'PATCH' });
+}
+
+export async function markAllNotificationsAsRead(): Promise<void> {
+  return apiRequest<void>('/api/notifications/read-all', { method: 'PATCH' });
+}

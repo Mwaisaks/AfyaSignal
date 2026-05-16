@@ -1,0 +1,10 @@
+package com.mwaisaka.AfyaSignal.enums;
+
+public enum NotificationType {
+    ASSESSMENT_SUBMITTED,
+    CRITICAL_CASE_FLAGGED,
+    OUTBREAK_ALERT_GENERATED,
+    ALERT_ACKNOWLEDGED,
+    REFERRAL_INCOMING,
+    REFERRAL_ACKNOWLEDGED
+}

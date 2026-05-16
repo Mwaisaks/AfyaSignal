@@ -8,6 +8,7 @@ import com.mwaisaka.AfyaSignal.mapper.AlertMapper;
 import com.mwaisaka.AfyaSignal.repository.AlertRepository;
 import com.mwaisaka.AfyaSignal.repository.AssessmentRepository;
 import com.mwaisaka.AfyaSignal.service.AlertService;
+import com.mwaisaka.AfyaSignal.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class AlertServiceImpl implements AlertService {
     private final AlertRepository alertRepository;
     private final AssessmentRepository assessmentRepository;
     private final AlertMapper alertMapper;
+    private final NotificationService notificationService;
 
     private static final int CLUSTER_THRESHOLD = 3;
     private static final int DAY_WINDOW = 7;
@@ -66,7 +68,8 @@ public class AlertServiceImpl implements AlertService {
                         .status(AlertStatus.NEW)
                         .build();
 
-                alertRepository.save(alert);
+                Alert saved = alertRepository.save(alert);
+                notificationService.notifyAdminsOfOutbreakAlert(saved);
                 log.warn("Outbreak alert generated for village: {}", village);
             }
         }

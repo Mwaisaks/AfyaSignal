@@ -13,6 +13,7 @@ import com.mwaisaka.AfyaSignal.repository.UserRepository;
 import com.mwaisaka.AfyaSignal.service.AlertService;
 import com.mwaisaka.AfyaSignal.service.AssessmentService;
 import com.mwaisaka.AfyaSignal.service.GeminiService;
+import com.mwaisaka.AfyaSignal.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,7 @@ public class AssessmentServiceImpl implements AssessmentService {
     private final AssessmentMapper assessmentMapper;
     private final GeminiService geminiService;
     private final AlertService alertService;
+    private final NotificationService notificationService;
 
     public AssessmentResponse createAssessment(AssessmentRequest request, UUID chvId) {
         User chv = userRepository.findById(chvId)
@@ -58,6 +60,10 @@ public class AssessmentServiceImpl implements AssessmentService {
         assessment.setTriageExplanation(explanation);
 
         Assessment saved = assessmentRepository.save(assessment);
+
+        notificationService.notifyChvOfSubmission(saved);
+        notificationService.notifyAdminsOfCriticalCase(saved);
+        notificationService.notifyFacilityOfReferral(saved);
 
         // Step 4: Check for outbreak clusters in this village
         alertService.checkForOutbreakClusters(request.getVillage());

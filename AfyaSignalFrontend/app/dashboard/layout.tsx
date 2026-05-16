@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { NotificationBell } from '@/components/notification-bell';
 
 export default function DashboardLayout({
   children,
@@ -49,6 +50,7 @@ export default function DashboardLayout({
                 {user.role === 'chv' ? 'CHV' : user.role === 'admin' ? 'Admin' : 'Facility'}
               </p>
             </div>
+            <NotificationBell />
             <Button
               onClick={handleLogout}
               variant="outline"
