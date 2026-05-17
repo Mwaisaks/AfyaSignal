@@ -9,4 +9,4 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 EXPOSE 8082
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "profile=${SPRING_PROFILES_ACTIVE:-prod}; case \"$profile\" in *'$'*|*'{'*|*'}'*|'') profile=prod ;; esac; exec java -Dspring.profiles.active=\"$profile\" -jar app.jar"]
